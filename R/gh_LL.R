@@ -11,7 +11,7 @@
 #' \item\code{time} : vector a timepoint.}
 #'
 #' See \code{\link{dynFUN_demo}}, \code{\link{model.clairon}}, \code{\link{model.pasin}} or \code{\link{model.pk}} for examples.
-#' @param y initial condition of the mechanism model, conform to what is asked in \code{dynFUN}.
+#' @param y initial condition of the mechanism model, conform to what is asked in \code{dynFUN}. If regressor used in Monolix provided a named list of vector of individual initial conditions. Each vector need to be of length 1 (same for all), or exactly the numbre of individuals (range in the same order as their id).
 #' @param mu list of individuals random effects estimation (vector of r.e. need to be named by the parameter names), use to locate the density mass; (optional, see description).
 #' @param Omega list of individuals estimated standard deviation diagonal matrix (matrix need to have rows and columns named by the parameter names), use to locate the density mass; (optional, see description).
 #' @param theta list of model parameters containing (see details) \itemize{\item\code{phi_pop} : named vector with the population parameters with no r.e. \eqn{(\phi_{l\ pop})_{l\leq L}} (NULL if none) ;
@@ -45,6 +45,7 @@
 #' @param ncores number of cores to use for parallelization, default will detect the number of cores available.
 #' @param onlyLL logical, if only the log-likelihood should be computed (and not \eqn{\partial_{\alpha_1} LL} or \eqn{\partial_{\alpha_1}^2 LL}).
 #' @param verbose logical, if progress bar should be printed through the computation.
+#' @param precBits precision if needed
 #'
 #' @return A list with the approximation by Gauss-Hermite quadrature of the likelihood \code{L}, the log-likelihood \code{LL}, the gradient of the log-likelihood \code{dLL}, and the Hessian of the log-likelihood \code{ddLL} at the point \eqn{\theta, \alpha} provided.
 #' @export
@@ -92,7 +93,8 @@ gh.LL <- function(
     parallel=TRUE,
     ncores=NULL,
     onlyLL=FALSE,
-    verbose=TRUE){
+    verbose=TRUE,
+    precBits=10){
 
   if(is.null(data)){
     test <- sapply(c("mu","Omega","theta","alpha1","covariates","ParModel.transfo","ParModel.transfo.inv","Sobs","Robs","Serr","Rerr","ObsModel.transfo"),FUN=is.null)
@@ -162,7 +164,8 @@ gh.LL <- function(
                     ind = i,
                     n = n,
                     prune = prune,
-                    onlyLL = onlyLL)
+                    onlyLL = onlyLL,
+                    precBits=precBits)
 
 
     return(LLi)
@@ -212,7 +215,8 @@ gh.LL.ind <- function(
     ind = NULL,
     n = NULL,
     prune=NULL,
-    onlyLL=FALSE){
+    onlyLL=FALSE,
+    precBits=10){
 
   mu <- Omega <- Sobs <- Robs <- covariates <- NULL
 
@@ -292,7 +296,16 @@ gh.LL.ind <- function(
   # eta_i = split(mh.parm$Points,1:nd)[[1]]
   dyn <- setNames(lapply(split(mh.parm$Points,1:nd),FUN=function(eta_i){
     PSI_i  = indParm(theta[c("phi_pop","psi_pop","gamma","beta")],covariates_i,setNames(eta_i,colnames(Omega_i)),ParModel.transfo,ParModel.transfo.inv)
-    dyn_eta_i <- dynFUN(all.tobs,y,unlist(unname(PSI_i)))
+
+    yi <- sapply(y,function(yk){
+      if(length(yk)==1){
+        return(yk)
+      }else{
+        return(yk[[ind]])
+      }
+    })
+
+    dyn_eta_i <- dynFUN(all.tobs,yi,unlist(unname(PSI_i)))
 
     return(dyn_eta_i)
   }),paste0("eta_",1:nd))
@@ -316,7 +329,7 @@ gh.LL.ind <- function(
 
       aux <- 1/(sig*sqrt(2*pi))*exp(-1/2*((Zki-a0-a1*Rki)/sig)**2)
       if(any(aux==0)){
-        pw <- Rmpfr::mpfr(-1/2*((Zki-a0-a1*Rki)/sig)**2,precBits = 32)
+        pw <- Rmpfr::mpfr(-1/2*((Zki-a0-a1*Rki)/sig)**2,precBits = precBits)
 
         aux = 1/(sig*sqrt(2*pi))*exp(pw)
 
@@ -592,8 +605,6 @@ lambda.max.ind <- function(
     n = NULL,
     prune=NULL){
 
-
-
   mu <- Omega <- Sobs <- Robs <- covariates <- NULL
 
   if(is.null(data)){
@@ -640,7 +651,13 @@ lambda.max.ind <- function(
   }
 
   if(is.null(n)){
-    n <- floor(100**(1/length(theta$psi_pop)))
+    if(length(theta$psi_pop)==1){
+      n <- 100
+    }else if(length(theta$psi_pop)==2){
+      n <- 10
+    }else{
+      n <- 7
+    }
   }
 
   dm = length(mu_i)
@@ -662,30 +679,39 @@ lambda.max.ind <- function(
 
   dyn <- setNames(lapply(split(mh.parm$Points,1:nd),FUN=function(eta_i){
     PSI_i  = indParm(theta[c("phi_pop","psi_pop","gamma","beta")],covariates_i,setNames(eta_i,colnames(Omega_i)),ParModel.transfo,ParModel.transfo.inv)
-    dyn_eta_i <- dynFUN(all.tobs,y,unlist(unname(PSI_i)))
+
+    yi <- sapply(y,function(yk){
+      if(length(yk)==1){
+        return(yk)
+      }else{
+        return(yk[[ind]])
+      }
+    })
+
+    dyn_eta_i <- dynFUN(all.tobs,yi,unlist(unname(PSI_i)))
 
     return(dyn_eta_i)
   }),paste0("eta_",1:nd))
 
   # Compute marginal latent density for each individual and value of RE
-  R.margDensity <- setNames(sapply(1:nd,FUN=function(ei){
-    dyn.ei = dyn[[paste0("eta_",ei)]]
-
-
-    res = prod(sapply(1:R.sz,FUN=function(k){
-      yGk = ObsModel.transfo$linkR[k]
-      sig = Rerr[[yGk]]
-      tki = Robs_i[[yGk]]$time
-      Zki = Robs_i[[yGk]][,yGk]
-
-      a0 = theta$alpha0[[yGk]]
-      a1 = alpha1[[yGk]]
-      trs = ObsModel.transfo$R[which(ObsModel.transfo$linkR==yGk)]
-      Rki = trs[[1]](dyn.ei[dyn.ei[,"time"] %in% tki,names(trs)])
-
-      prod(1/(sig*sqrt(2*pi))*exp(-1/2*((Zki-a0-a1*Rki)/sig)**2))
-    }))
-  }),paste0("eta_",1:nd))
+  # R.margDensity <- setNames(sapply(1:nd,FUN=function(ei){
+  #   dyn.ei = dyn[[paste0("eta_",ei)]]
+  #
+  #
+  #   res = prod(sapply(1:R.sz,FUN=function(k){
+  #     yGk = ObsModel.transfo$linkR[k]
+  #     sig = Rerr[[yGk]]
+  #     tki = Robs_i[[yGk]]$time
+  #     Zki = Robs_i[[yGk]][,yGk]
+  #
+  #     a0 = theta$alpha0[[yGk]]
+  #     a1 = alpha1[[yGk]]
+  #     trs = ObsModel.transfo$R[which(ObsModel.transfo$linkR==yGk)]
+  #     Rki = trs[[1]](dyn.ei[dyn.ei[,"time"] %in% tki,names(trs)])
+  #
+  #     prod(1/(sig*sqrt(2*pi))*exp(-1/2*((Zki-a0-a1*Rki)/sig)**2))
+  #   }))
+  # }),paste0("eta_",1:nd))
 
   # A(Y|theta0)
   if(S.sz!=0){
@@ -777,7 +803,13 @@ lambda.max  <- function(
     }
   }
   if(is.null(n)){
-    n <- floor(100**(1/length(theta$psi_pop)))
+    if(length(theta$psi_pop)==1){
+      n <- 100
+    }else if(length(theta$psi_pop)==2){
+      n <- 10
+    }else{
+      n <- 7
+    }
   }
 
   if(parallel){
@@ -820,9 +852,11 @@ lambda.max  <- function(
                    Robs_i = lapply(Robs,FUN=function(R){R[R$id==i,]}),
                    Serr = Serr,
                    Rerr = Rerr,
+                   ind=i,
                    ObsModel.transfo = ObsModel.transfo,
                    n = n,
                    prune = prune)
+
     }
 
   if(verbose)

@@ -1,0 +1,9 @@
+\documentclass{article}
+\usepackage{pdfpages}
+%\VignetteIndexEntry{REMixed_vignette}
+%\VignettePackage{REMixed}
+%\VignetteEncoding{UTF-8}
+
+\begin{document}
+\includepdf[pages=-, fitpaper=true]{Vignette___REMixed.pdf}
+\end{document}

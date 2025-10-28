@@ -1,7 +1,7 @@
 #' REMixed algorithm over a grid of \eqn{\lambda}
 #'
 #' @description
-#' Regularization and Estimation in MIXed effects model, over a regularization path.
+#' Regularization and Estimation in Mixed effects model, over a regularization path.
 #'
 #' @details
 #' See \code{\link{REMixed-package}} for details on the model.
@@ -16,7 +16,7 @@
 #' \item{\code{time}}{vector a timepoint.}}
 #'
 #' See \code{\link{dynFUN_demo}}, \code{\link{model.clairon}}, \code{\link{model.pasin}} or \code{\link{model.pk}} for examples.
-#' @param y initial condition of the mechanism model, conform to what is asked in dynFUN.
+#' @param y initial condition of the mechanism model, conform to what is asked in dynFUN. If regressor used in Monolix provided a named list of vector of individual initial conditions. Each vector need to be of length 1 (same for all), or exactly the numbre of individuals (range in the same order as their id).
 #' @param ObsModel.transfo list containing two lists of transformations and two vectors linking each transformations to their observation model name in the Monolix project. The list should include identity transformations and be named \code{S} and \code{R}. The two vectors should be named \code{linkS} and \code{linkR}.
 #'
 #' Both \code{S} (for the direct observation models) and \code{linkS}, as well as \code{R} (for latent process models) and \code{linkR}, must have the same length.
@@ -385,7 +385,8 @@ cv.remix <- function(project = NULL,
         LLpen.aux <- gh.LL(dynFUN = dynFUN, y = y, data = currentData, n = n, prune = prune, parallel = FALSE ,onlyLL=TRUE,verbose = PRINT) - lambda * sum(abs(a.final))
 
         if((LLpen.aux %in% c(-Inf,Inf) | LLpen.aux < LL0.pen) && !all(a.final==0)){
-          to.cat <- "\t/!\ [RECALIBRATION] /!\\n"
+          to.cat <- "\t/!\\ [RECALIBRATION] /!\\\n"
+
           print_result(PRINT, summary.file, to.cat = to.cat, to.print = NULL)
           print_result(print, summary.file.new, to.cat = to.cat, to.print = NULL)
           th <- 1
@@ -423,11 +424,19 @@ cv.remix <- function(project = NULL,
                            parallel = FALSE,
                            lambda = lambda)
 
-          a.final[to.recalibrate] <- a.ini[to.recalibrate] + delta*sears$vw
+          if(is.na(sears$vw)){
+            to.cat <- "Fail to recalibrate, move to the next iteration\n"
+
+            print_result(PRINT, summary.file, to.cat = to.cat, to.print = NULL)
+            print_result(print, summary.file.new, to.cat = to.cat, to.print = NULL)
+          }else{
+            a.final[to.recalibrate] <- a.ini[to.recalibrate] + delta*sears$vw
 
           currentData$alpha1 <- a.final
 
           LLpen.aux <- gh.LL(dynFUN = dynFUN, y = y, data = currentData, n = n, prune = prune, parallel = FALSE,onlyLL=TRUE,verbose=FALSE) - lambda * sum(abs(a.final))
+
+          }
         }
 
         to.print <- data.frame(EstimatedValue = format(signif(a.final,digits=digits),scientific=TRUE))
@@ -457,7 +466,6 @@ cv.remix <- function(project = NULL,
                          currentData = currentData,
                          alpha = alpha, a.final = a.final,iter = iter , pop.set = pop.set2,
                          conditionalDistributionSampling = TRUE, StandardErrors = FALSE)
-
 
         estimates = re$SAEMiterations
         if(length(setdiff(union(param.toprint,regParam.toprint),colnames(estimates)[-c(1,2,3)]))!=0){

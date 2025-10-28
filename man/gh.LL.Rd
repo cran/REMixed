@@ -25,7 +25,8 @@ gh.LL(
   parallel = TRUE,
   ncores = NULL,
   onlyLL = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  precBits = 10
 )
 }
 \arguments{
@@ -35,7 +36,7 @@ gh.LL(
 
 See \code{\link{dynFUN_demo}}, \code{\link{model.clairon}}, \code{\link{model.pasin}} or \code{\link{model.pk}} for examples.}
 
-\item{y}{initial condition of the mechanism model, conform to what is asked in \code{dynFUN}.}
+\item{y}{initial condition of the mechanism model, conform to what is asked in \code{dynFUN}. If regressor used in Monolix provided a named list of vector of individual initial conditions. Each vector need to be of length 1 (same for all), or exactly the numbre of individuals (range in the same order as their id).}
 
 \item{mu}{list of individuals random effects estimation (vector of r.e. need to be named by the parameter names), use to locate the density mass; (optional, see description).}
 
@@ -88,6 +89,8 @@ Both \code{S} (for the direct observation models) and \code{linkS}, as well as \
 \item{onlyLL}{logical, if only the log-likelihood should be computed (and not \eqn{\partial_{\alpha_1} LL} or \eqn{\partial_{\alpha_1}^2 LL}).}
 
 \item{verbose}{logical, if progress bar should be printed through the computation.}
+
+\item{precBits}{precision if needed}
 }
 \value{
 A list with the approximation by Gauss-Hermite quadrature of the likelihood \code{L}, the log-likelihood \code{LL}, the gradient of the log-likelihood \code{dLL}, and the Hessian of the log-likelihood \code{ddLL} at the point \eqn{\theta, \alpha} provided.

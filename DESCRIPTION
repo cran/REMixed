@@ -1,7 +1,7 @@
 Package: REMixed
 Type: Package
-Title: Regularized Estimation in Mixed Effect Model
-Version: 0.1.0
+Title: Regularized Estimation in Mixed Effects Model
+Version: 1.1.0
 Authors@R: c(person(given = "Auriane",
                         family = "Gabaut",
                         role = c("aut", "cre"),
@@ -27,10 +27,10 @@ Imports: deSolve, Rsmlx, doSNOW, dplyr, fastGHQuad, ggplot2, snow,
 RoxygenNote: 7.3.2
 Depends: R (>= 3.5.0), foreach
 NeedsCompilation: no
-Packaged: 2025-06-23 12:19:34 UTC; auria
+Packaged: 2025-10-28 10:47:12 UTC; auria
 Author: Auriane Gabaut [aut, cre],
   Ariane Bercu [aut],
   Mélanie Prague [aut],
   Cécile Proust-Lima [aut]
 Repository: CRAN
-Date/Publication: 2025-06-27 12:50:06 UTC
+Date/Publication: 2025-10-28 11:20:13 UTC
