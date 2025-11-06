@@ -1,6 +1,6 @@
-4936f60b0afbb17ee6e1f25c4a55e508 *DESCRIPTION
+01302abda94fec1d2c0c01feb7fcaeb5 *DESCRIPTION
 267cfc198fd81bdb6fb0deebda55cfd8 *NAMESPACE
-9dcced3ee188d9f7320f4dd89c222db2 *NEWS.md
+6877c8e4024f8364fa20963c92b33409 *NEWS.md
 752373488a7a196b4c6390eceef7e16f *R/REMixed-package.R
 2de5e0d109b93bb53aba22b1ef381a8b *R/computeFinalTest.R
 1e859e7fb5807bfd55d58747b18bdb35 *R/crit.R
@@ -24,7 +24,7 @@ ec96cd0b3390041bfaa4eb92cc9c7065 *R/searpas.R
 76bef21ce1ff85efe07e7a6794d4f93d *build/vignette.rds
 1b462ed64083914190ae5a9496d8bcef *data/dynFUN_demo.rda
 5f55f726d63dc2212bd4d7a6d8ca61e9 *inst/doc/doc.Rnw
-e4ea4a8925e41c861b2c17cdc3d81797 *inst/doc/doc.pdf
+539e481f214b8f23513a3e8204ff1f1e *inst/doc/doc.pdf
 47bf13273525b9893cbed6f8cf4a71cf *inst/extdata/data.txt
 9fc8cd50cb2f08fe1f69e84ebd99030e *inst/extdata/demoMLX.mlxproperties
 f15fd40fe6ccf83c56178950d9f4a8f4 *inst/extdata/demoMLX.mlxtran
@@ -59,5 +59,5 @@ c30a85bf4d34962e4d9041a206e90462 *man/plotInit.Rd
 1f2bd5aad71cc4a4d0b7ba82d5ff617c *man/readMLX.Rd
 2e93927241d57f65e75f1c70fbb98c1b *man/remix.Rd
 a2ebc413b9d9eace1c9414209d84727f *man/retrieveBest.Rd
-3df0bfb0c4e73b0ed1cd485846e46d32 *vignettes/Vignette___REMixed.pdf
+f8b021888d81ece0ace1100b2e785c7f *vignettes/Vignette___REMixed.pdf
 5f55f726d63dc2212bd4d7a6d8ca61e9 *vignettes/doc.Rnw
